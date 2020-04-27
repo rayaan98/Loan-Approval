@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import graphviz 
 from sklearn import tree
 
-
+#access the csv files
 train_df = pd.read_csv('train.csv')
 train_df.info()
 test_df = pd.read_csv('test.csv')
@@ -22,7 +22,7 @@ test_df = test_df.drop(columns=['Loan_ID'])
 categorical_columns = ['Gender', 'Married', 'Dependents', 'Education', 'Self_Employed', 'Loan_Amount_Term', 'Property_Area','Credit_History']
 numerical_columns = ['ApplicantIncome', 'CoapplicantIncome', 'LoanAmount']
 
-
+#plotting the data from train.csv on graphs
 fig,axes = plt.subplots(4,2,figsize=(12,15))
 for idx,cat_col in enumerate(categorical_columns):
     row,col = idx//2,idx%2
@@ -41,6 +41,8 @@ fig.savefig('numerical_columns.png')
 print(train_df[numerical_columns].describe())
 plt.subplots_adjust(hspace=1)
 
+
+#turning the data into a format that is more readable for a computer
 train_df_encoded = pd.get_dummies(train_df,drop_first=True)
 train_df_encoded.head()
 test_df_encoded = pd.get_dummies(test_df,drop_first=True)
@@ -59,6 +61,7 @@ imp_train = imp.fit(x_train)
 x_train = imp_train.transform(x_train)
 x_test_imp = imp_train.transform(x_test)
 
+#training our classifier based off of the list x_train which was taken from train.csv
 tree_clf = DecisionTreeClassifier()
 tree_clf.fit(x_train,y_train)
 y_pred = tree_clf.predict(x_train)
@@ -68,49 +71,14 @@ print("Training Data F1 Score ", f1_score(y_train,y_pred))
 print("Validation Mean F1 Score: ",cross_val_score(tree_clf,x_train,y_train,cv=5,scoring='f1_macro').mean())
 print("Validation Mean Accuracy: ",cross_val_score(tree_clf,x_train,y_train,cv=5,scoring='accuracy').mean())
 
-training_accuracy = []
-val_accuracy = []
-training_f1 = []
-val_f1 = []
-tree_depths = []
-
-for depth in range(1,20):
-    tree_clf = DecisionTreeClassifier(max_depth=depth)
-    tree_clf.fit(x_train,y_train)
-    y_training_pred = tree_clf.predict(x_train)
-
-    training_acc = accuracy_score(y_train,y_training_pred)
-    train_f1 = f1_score(y_train,y_training_pred)
-    val_mean_f1 = cross_val_score(tree_clf,x_train,y_train,cv=5,scoring='f1_macro').mean()
-    val_mean_accuracy = cross_val_score(tree_clf,x_train,y_train,cv=5,scoring='accuracy').mean()
-    
-    training_accuracy.append(training_acc)
-    val_accuracy.append(val_mean_accuracy)
-    training_f1.append(train_f1)
-    val_f1.append(val_mean_f1)
-    tree_depths.append(depth)
-    
-
-Tuning_Max_depth = {"Training Accuracy": training_accuracy, "Validation Accuracy": val_accuracy, "Training F1": training_f1, "Validation F1":val_f1, "Max_Depth": tree_depths }
-Tuning_Max_depth_df = pd.DataFrame.from_dict(Tuning_Max_depth)
-
-plot_df = Tuning_Max_depth_df.melt('Max_Depth',var_name='Metrics',value_name="Values")
-fig,ax = plt.subplots(figsize=(15,5))
-sns.pointplot(x="Max_Depth", y="Values",hue="Metrics", data=plot_df,ax=ax)
-
-tree_clf = tree.DecisionTreeClassifier(max_depth = 3)
-tree_clf.fit(x_train,y_train)
-dot_data = tree.export_graphviz(tree_clf,feature_names = x.columns.tolist())
-graph = graphviz.Source(dot_data)
-graph
-
+#graphing the accuracy of the predictions
 training_accuracy = []
 val_accuracy = []
 training_f1 = []
 val_f1 = []
 min_samples_leaf = []
 import numpy as np
-for samples_leaf in range(1,80,3): ### Sweeping from 1% samples to 10% samples per leaf 
+for samples_leaf in range(1,80,3):
     tree_clf = DecisionTreeClassifier(max_depth=3,min_samples_leaf = samples_leaf)
     tree_clf.fit(x_train,y_train)
     y_training_pred = tree_clf.predict(x_train)
@@ -136,12 +104,14 @@ sns.pointplot(x="Min_Samples_leaf", y="Values",hue="Metrics", data=plot_df,ax=ax
 
 fig.savefig('graph.png')
 
+#making predictions for the data from test.csv
 from sklearn.metrics import confusion_matrix
 tree_clf = DecisionTreeClassifier(max_depth=3,min_samples_leaf = 35)
 tree_clf.fit(x_train,y_train)
 y_pred = tree_clf.predict(x_test_imp)
 y = y_pred
 
+#putting the dataframe of test.csv into testPredictions.csv along with the Loan_Status column, with all of the predictions from our classifier
 from csv import writer
 from csv import reader
 with open('testPredictions.csv', 'w', newline='') as write_obj, open('test.csv', 'r') as reader_obj:
