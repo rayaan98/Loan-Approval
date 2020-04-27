@@ -16,7 +16,7 @@ def enter_button():
   loanamountterm = Loan_Amount_Term.get()
   credithistory = Credit_History.get()
   propertyarea = Property_Area.get()
-  with open('test.csv', w', newline='') as f:
+  with open('test.csv', 'w', newline='') as f:
     w = csv.writer(f,dialect='excel-tab')
     w.writerow([loan_id,',',gender,',',married,',',dependents,',',education,',',self_employed,',',applicantincome,',',coapplicantincome,',',loanamount,',',loanamountterm,',',credithistory,',',propertyarea])
 
